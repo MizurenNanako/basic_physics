@@ -37,6 +37,7 @@ namespace cgt
     {
     public:
         friend class basic_vec_t<T, N, !dual>;
+        // friend auto operator<<(std::ostream &,basic_vec_t);
         using value_type = T;
         using size_type = size_t;
 
@@ -174,12 +175,30 @@ namespace cgt
         vec_t(T _x, T _y) : x{_x}, y{_y} {}
         vec_t(std::convertible_to<std::array<T, 2>> auto &&_init) : x{_init[0]}, y{_init[1]} {}
         ~vec_t() = default;
-        auto operator[](size_type index) -> T & { return index == 0   ? x
-                                                         : index == 1 ? y
-                                                                      : 0; }
-        auto operator[](size_type index) const -> const T & { return index == 0   ? x
-                                                                     : index == 1 ? y
-                                                                                  : 0; }
+        auto operator[](size_type index) -> T &
+        {
+            switch (index)
+            {
+            case 0:
+                return x;
+            case 1:
+                return y;
+            default:
+                throw std::range_error(__func__);
+            }
+        }
+        auto operator[](size_type index) const -> const T &
+        {
+            switch (index)
+            {
+            case 0:
+                return x;
+            case 1:
+                return y;
+            default:
+                throw std::range_error(__func__);
+            }
+        }
         auto operator+(const vec_t<T, 2, dual> &rhs) const -> vec_t<T, 2, dual> { return vec_t<T, 2, dual>(x + rhs.x, y + rhs.y); }
         auto operator+=(const vec_t<T, 2, dual> &rhs) -> vec_t<T, 2, dual> &
         {
@@ -256,6 +275,16 @@ namespace cgt
 
 namespace cgt
 {
+    template <typename T, unsigned N>
+    auto operator<<(std::ostream &os, const vec_t<T, N, false> &me) -> std::ostream &
+    {
+        cgt::integral_span<0, N> intsp;
+        os << "(";
+        std::for_each_n(intsp.begin(), N,
+                        [&os, &me](size_t n)
+                        { os << me[n] << ","[n != 0]; });
+        return os << ")";
+    }
     template <typename T>
     using vec2_t = vec_t<T, 2, false>;
     template <typename T>
